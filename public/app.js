@@ -529,8 +529,9 @@ function placeUserMarker() {
 function drawMap() {
   if (!map) {
     map = L.map("map", { zoomControl: true, attributionControl: true }).setView([49.8, 23.2], 8);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: "&copy; OpenStreetMap &copy; CARTO",
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap",
+      maxZoom: 19,
     }).addTo(map);
   }
   markers.forEach((m) => m.remove());
@@ -563,10 +564,15 @@ function drawMap() {
   if (!$("detail").dataset.pinned) showBorderList(groups);
 }
 
-function showMapView() {
-  document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.view === "map"));
+function setActiveView(view) {
+  document.body.dataset.view = view;
+  document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.view === view));
   document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-  $("view-map").classList.add("active");
+  $(`view-${view}`).classList.add("active");
+}
+
+function showMapView() {
+  setActiveView("map");
   setTimeout(() => map && map.invalidateSize(), 60);
 }
 
@@ -774,11 +780,8 @@ async function loadQueues() {
 document.querySelectorAll(".tab").forEach((btn) => {
   btn.addEventListener("click", () => {
     closeCameraSheet();
-    document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
-    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-    btn.classList.add("active");
-    $(`view-${btn.dataset.view}`).classList.add("active");
-    if (btn.dataset.view === "map" && map) setTimeout(() => map && map.invalidateSize(), 50);
+    setActiveView(btn.dataset.view);
+    if (btn.dataset.view === "map" && map) setTimeout(() => map && map.invalidateSize(), 80);
     if (btn.dataset.view === "wall") renderWall();
   });
 });
@@ -821,6 +824,7 @@ $("camera-sheet")?.addEventListener("close", () => {
 
 renderSources();
 loadHlsStatus();
+document.body.dataset.view = "map";
 pendingFit = true;
 setBorderFilter("Poland");
 loadQueues();

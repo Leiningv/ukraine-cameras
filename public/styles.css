@@ -303,6 +303,11 @@ th { color: var(--muted); font-weight: 600; }
 .wait-mid { color: var(--warn); }
 .wait-bad { color: var(--bad); }
 
+body[data-view="map"] main { overflow: hidden; }
+body[data-view="wall"] main,
+body[data-view="queues"] main,
+body[data-view="sources"] main { overflow: auto; }
+
 @media (min-width: 900px) {
   .top { padding: 16px 24px 8px; }
   .tabs, .toolbar { padding-left: 24px; padding-right: 24px; }
@@ -324,13 +329,62 @@ th { color: var(--muted); font-weight: 600; }
 }
 
 @media (max-width: 899px) {
-  .stats { width: 100%; }
-  .stats div { flex: 1 1 40%; }
-  #country-filter { display: none; }
-  .chip.featured { flex: 1 1 auto; text-align: center; }
-  .nearest-btn { width: 100%; }
-  #view-map.active {
-    grid-template-rows: minmax(200px, 1fr) minmax(160px, 38%);
+  :root { --tap: 36px; }
+  .top {
+    padding: 6px 10px 2px;
+    gap: 8px;
+    align-items: center;
   }
-  #detail { max-height: 38%; }
+  .eyebrow { font-size: 10px; }
+  h1 { display: none; }
+  .stats { width: auto; flex-wrap: nowrap; gap: 4px; }
+  .stats div { padding: 4px 6px; min-width: 0; border-radius: 8px; }
+  .stats strong { font-size: 13px; line-height: 1.1; }
+  .stats span { display: none; }
+  .tabs, .toolbar { padding: 4px 10px; gap: 6px; }
+  .tab, .chip, .nearest-btn, input[type="search"] {
+    min-height: var(--tap);
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  #country-filter { display: none; }
+  .locate-row { flex-wrap: nowrap; }
+  .nearest-btn { width: auto; flex: 0 0 auto; }
+  .locate-status { display: none; }
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .chip { flex: 0 0 auto; white-space: nowrap; }
+  .chip.featured { flex: 0 0 auto; }
+  .check { display: none; }
+  .note { display: none; }
+  #view-map { padding: 8px 10px 0; }
+  #view-map.active {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    grid-template-rows: none;
+  }
+  #map {
+    flex: 1 1 58%;
+    min-height: 0;
+    height: auto;
+    overflow: hidden;
+  }
+  #detail {
+    flex: 0 0 38%;
+    max-height: none;
+    min-height: 120px;
+    padding: 10px 12px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .crossing-list { margin-top: 8px; gap: 6px; }
+  .crossing-list button { padding: 10px; }
+  .leaflet-control-zoom { margin-top: 8px !important; }
 }
