@@ -529,9 +529,8 @@ function placeUserMarker() {
 function drawMap() {
   if (!map) {
     map = L.map("map", { zoomControl: true, attributionControl: true }).setView([49.8, 23.2], 8);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap",
-      maxZoom: 19,
     }).addTo(map);
   }
   markers.forEach((m) => m.remove());
