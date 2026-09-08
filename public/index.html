@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Ukraine Live Camera Portal</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=3" />
   </head>
   <body>
+    <div class="app">
     <div class="chrome">
       <header class="top">
         <div>
@@ -18,7 +19,7 @@
           <div><strong id="stat-live">0</strong><span>live cameras</span></div>
           <div><strong id="stat-crossings">0</strong><span>crossings</span></div>
           <div><strong id="stat-trucks">–</strong><span>trucks in eQueue</span></div>
-          <div><strong id="stat-updated">–</strong><span>last update</span></div>
+          <div><strong id="stat-updated">–</strong><span>updated</span></div>
         </div>
       </header>
 
@@ -66,6 +67,9 @@
       </section>
 
       <section id="view-wall" class="view">
+        <div id="wall-stage" class="wall-stage panel">
+          <p class="hint">Tap a camera below. Video plays here if the stream is reachable; otherwise use Watch live.</p>
+        </div>
         <div id="wall" class="wall"></div>
       </section>
 
@@ -92,16 +96,25 @@
       <section id="view-sources" class="view">
         <div id="sources" class="source-grid"></div>
       </section>
-    </main>
 
-    <p class="note">
-      Public feeds only. Most Ukraine-side and Poland–Ukraine border webcams have been off since 24 February 2022.
-      Queue numbers come from the official eQueue service. Your location stays in this browser and is never sent to a server.
-    </p>
+      <p class="note">
+        Public feeds only. Most Ukraine-side and Poland–Ukraine border webcams have been off since 24 February 2022.
+        Queue numbers refresh from the official eQueue service. Your location stays in this browser and is never sent to a server.
+      </p>
+    </main>
+    </div>
+
+    <dialog id="camera-sheet" class="sheet">
+      <div class="sheet-bar">
+        <strong id="sheet-title">Camera</strong>
+        <button type="button" id="sheet-close">Close</button>
+      </div>
+      <div id="sheet-body"></div>
+    </dialog>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
     <script src="/data.js"></script>
-    <script src="/app.js"></script>
+    <script src="/app.js?v=3"></script>
   </body>
 </html>

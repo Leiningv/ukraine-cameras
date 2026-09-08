@@ -14,11 +14,33 @@ let accuracyCircle = null;
 let lastUser = null;
 let nearestKeyHighlight = null;
 let nearestDistanceKm = null;
+let hlsProxyOk = null;
+let wallSelectedId = null;
+let playGeneration = 0;
 
 const $ = (id) => document.getElementById(id);
 
-function hlsUrl(slug) {
-  return `/api/media?url=${encodeURIComponent(`https://mediaserver.border.gov.md:50793/hls/${slug}/index.m3u8`)}`;
+function directHlsUrl(slug) {
+  return `https://mediaserver.border.gov.md:50793/hls/${slug}/index.m3u8`;
+}
+
+function proxyHlsUrl(slug) {
+  return `/api/media?url=${encodeURIComponent(directHlsUrl(slug))}`;
+}
+
+function watchLiveHref(cam) {
+  return cam.page;
+}
+
+function destroyActiveHls() {
+  if (activeHls) {
+    try {
+      activeHls.destroy();
+    } catch {
+      /* already torn down */
+    }
+    activeHls = null;
+  }
 }
 
 function formatWait(seconds) {
@@ -162,40 +184,228 @@ function setLocateStatus(message, kind = "") {
   el.className = `locate-status ${kind}`.trim();
 }
 
-function playHls(video, slug) {
-  const src = hlsUrl(slug);
-  if (activeHls) {
-    activeHls.destroy();
-    activeHls = null;
+function watchLiveButton(cam, label = "Watch live") {
+  return `<a class="watch-live" href="${watchLiveHref(cam)}" target="_blank" rel="noopener">${label}</a>`;
+}
+
+function fallbackMessage(cam) {
+  if (cam.kind === "page") {
+    return cam.note || "This camera is on an official page, not a direct video stream.";
   }
-  if (window.Hls && Hls.isSupported()) {
-    activeHls = new Hls({ enableWorker: true });
-    activeHls.loadSource(src);
-    activeHls.attachMedia(video);
-    activeHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+  if (cam.kind === "offline") {
+    return cam.note || "No public live feed.";
+  }
+  if (hlsProxyOk === false) {
+    return "This network cannot reach Moldova’s camera server (port 50793). Open the official page to watch if your phone or another network allows it.";
+  }
+  return "If the video does not start, open the official live page.";
+}
+
+function playerFallbackHtml(cam, statusText) {
+  const status = cameraStatus(cam);
+  const title = cam.kind === "offline" ? "Camera offline" : cam.kind === "page" ? "Official live page" : "Live camera";
+  return `
+    <div class="player-fallback" data-fallback>
+      <div class="player-poster" aria-hidden="true">${cam.kind === "offline" ? "○" : "▶"}</div>
+      <span class="badge ${status.cls}">${status.label}</span>
+      <p class="player-fallback-title">${title}</p>
+      <p class="hint" data-status>${statusText || fallbackMessage(cam)}</p>
+      ${watchLiveButton(cam, cam.kind === "offline" ? "Official page" : "Watch live")}
+    </div>
+  `;
+}
+
+function mountStaticFallback(host, cam) {
+  host.innerHTML = playerFallbackHtml(cam);
+}
+
+function tryNativeHls(video, src, gen) {
+  return new Promise((resolve, reject) => {
+    if (!video.canPlayType("application/vnd.apple.mpegurl")) {
+      reject(new Error("no native HLS"));
+      return;
+    }
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error("timeout"));
+    }, 8000);
+    const ok = () => {
+      cleanup();
+      resolve();
+    };
+    const bad = () => {
+      cleanup();
+      reject(new Error("native error"));
+    };
+    function cleanup() {
+      clearTimeout(timer);
+      video.removeEventListener("loadedmetadata", ok);
+      video.removeEventListener("error", bad);
+    }
+    if (playGeneration !== gen) {
+      cleanup();
+      reject(new Error("cancelled"));
+      return;
+    }
+    video.addEventListener("loadedmetadata", ok, { once: true });
+    video.addEventListener("error", bad, { once: true });
     video.src = src;
     video.play().catch(() => {});
+  });
+}
+
+function tryHlsJs(video, src, gen) {
+  return new Promise((resolve, reject) => {
+    if (!(window.Hls && Hls.isSupported())) {
+      reject(new Error("no hls.js"));
+      return;
+    }
+    destroyActiveHls();
+    const hls = new Hls({
+      enableWorker: true,
+      maxBufferLength: 10,
+      manifestLoadingTimeOut: 7000,
+      manifestLoadingMaxRetry: 1,
+      levelLoadingTimeOut: 7000,
+      levelLoadingMaxRetry: 1,
+      fragLoadingTimeOut: 7000,
+      fragLoadingMaxRetry: 1,
+    });
+    const timer = setTimeout(() => {
+      hls.destroy();
+      if (activeHls === hls) activeHls = null;
+      reject(new Error("timeout"));
+    }, 8000);
+    activeHls = hls;
+    hls.loadSource(src);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      if (playGeneration !== gen) {
+        clearTimeout(timer);
+        hls.destroy();
+        reject(new Error("cancelled"));
+        return;
+      }
+      clearTimeout(timer);
+      video.play().catch(() => {});
+      resolve();
+    });
+    hls.on(Hls.Events.ERROR, (_event, data) => {
+      if (!data.fatal) return;
+      clearTimeout(timer);
+      hls.destroy();
+      if (activeHls === hls) activeHls = null;
+      reject(data);
+    });
+  });
+}
+
+async function playWithFallback(video, cam, onOk, onFail) {
+  const gen = ++playGeneration;
+  if (hlsProxyOk === null) await loadHlsStatus();
+  if (playGeneration !== gen) return;
+  const proxy = proxyHlsUrl(cam.slug);
+  const direct = directHlsUrl(cam.slug);
+  const attempts = [];
+  if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    attempts.push(() => tryNativeHls(video, direct, gen));
+    if (hlsProxyOk !== false) attempts.push(() => tryNativeHls(video, proxy, gen));
+  }
+  if (hlsProxyOk !== false) attempts.push(() => tryHlsJs(video, proxy, gen));
+  attempts.push(() => tryHlsJs(video, direct, gen));
+
+  for (const attempt of attempts) {
+    if (playGeneration !== gen) return;
+    try {
+      await attempt();
+      if (playGeneration !== gen) return;
+      onOk();
+      return;
+    } catch {
+      destroyActiveHls();
+      video.removeAttribute("src");
+      try {
+        video.load();
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  if (playGeneration === gen) {
+    onFail(fallbackMessage(cam));
   }
 }
 
-function showCamera(cam) {
+function mountHlsPlayer(host, cam) {
+  const initialStatus = hlsProxyOk === false ? fallbackMessage(cam) : "Trying live stream…";
+  host.innerHTML = `
+    ${playerFallbackHtml(cam, initialStatus)}
+    <video class="hidden" id="live-video" controls muted playsinline autoplay></video>
+  `;
+  const video = host.querySelector("video");
+  const fallback = host.querySelector("[data-fallback]");
+  const status = host.querySelector("[data-status]");
+  playWithFallback(
+    video,
+    cam,
+    () => {
+      fallback.classList.add("hidden");
+      video.classList.remove("hidden");
+    },
+    (msg) => {
+      if (status) status.textContent = msg;
+      video.classList.add("hidden");
+      fallback.classList.remove("hidden");
+    }
+  );
+}
+
+function mountPlayer(host, cam) {
+  destroyActiveHls();
+  if (cam.kind === "hls") {
+    mountHlsPlayer(host, cam);
+    return;
+  }
+  mountStaticFallback(host, cam);
+}
+
+function openCameraSheet(cam) {
+  const sheet = $("camera-sheet");
+  const body = $("sheet-body");
+  if (!sheet || !body) return;
+  wallSelectedId = cam.id;
+  $("sheet-title").textContent = cam.name;
   const status = cameraStatus(cam);
   const related = nearbyQueues(cam.lat, cam.lng);
   const truckN = related.filter((x) => (queues.trucks || []).includes(x)).reduce((n, x) => n + (x.vehicle_in_active_queues_counts || 0), 0);
   const wait = related.reduce((n, x) => Math.max(n, x.wait_time || 0), 0);
-  $("detail").innerHTML = `
+  const frame = cam.kind === "page"
+    ? `<iframe class="cam-frame" src="${cam.page}" title="${cam.name}" referrerpolicy="no-referrer"></iframe>`
+    : "";
+  body.innerHTML = `
     <span class="badge ${status.cls}">${status.label}</span>
     <h2>${cam.name}</h2>
     <p>${cam.crossing} · ${cam.border}</p>
     <p class="${waitClass(wait)}">Nearby eQueue: ${truckN} trucks · wait ${formatWait(wait)}</p>
-    ${cam.kind === "hls" ? `<video id="live-video" controls autoplay muted playsinline></video>` : ""}
+    ${frame}
+    <div data-player></div>
     <p>${cam.note || "Public camera from the neighbouring border service."}</p>
-    <div class="actions">
-      <a href="${cam.page}" target="_blank" rel="noopener">Open official live page</a>
-    </div>
+    <div class="actions">${watchLiveButton(cam, cam.kind === "offline" ? "Official page" : "Watch live")}</div>
   `;
-  if (cam.kind === "hls") playHls($("live-video"), cam.slug);
+  if (cam.kind === "hls") mountPlayer(body.querySelector("[data-player]"), cam);
+  else if (cam.kind !== "page") mountPlayer(body.querySelector("[data-player]"), cam);
+  if (typeof sheet.showModal === "function" && !sheet.open) sheet.showModal();
+}
+
+function closeCameraSheet() {
+  destroyActiveHls();
+  playGeneration += 1;
+  const sheet = $("camera-sheet");
+  if (sheet?.open) sheet.close();
+}
+
+function showCamera(cam) {
+  openCameraSheet(cam);
 }
 
 function showPolandList(groups) {
@@ -252,7 +462,7 @@ function showCrossing(group, extras = {}) {
     $("detail").dataset.pinned = "";
     showPolandList(groupedCrossings().filter(filterText));
   });
-  $("detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  $("detail").scrollIntoView({ behavior: "smooth", block: "end" });
 }
 
 function markerColor(group) {
@@ -395,32 +605,59 @@ function locateNearest() {
   );
 }
 
-function renderWall() {
-  const matched = cameras.filter((cam) => filterText(cam) && (cam.kind === "hls" || isPolandView()));
+function wallCameras() {
+  return cameras.filter((cam) => {
+    if (!filterText(cam)) return false;
+    if (cam.kind === "hls" || cam.kind === "page") return true;
+    return isPolandView();
+  });
+}
+
+function renderWallStage(_cam) {
+  /* Camera playback is in the overlay sheet so it never opens behind the header. */
+}
+
+function renderWallCards() {
+  const matched = wallCameras();
   $("wall").innerHTML = matched.map((cam) => {
     const status = cameraStatus(cam);
+    const selected = cam.id === wallSelectedId ? " selected" : "";
+    const action = cam.kind === "hls" ? "Tap to open" : cam.kind === "page" ? "Official live page" : "Offline";
     return `
-    <article class="wall-item cam-card">
+    <article class="wall-item cam-card${selected}" data-cam="${cam.id}" tabindex="0" role="button">
       <span class="badge ${status.cls}">${status.label}</span>
       <h3>${cam.name}</h3>
       <p>${cam.crossing}</p>
-      ${cam.kind === "hls" ? `<video id="wall-${cam.id}" controls muted playsinline></video>` : `<p class="hint">${cam.note || "No public live feed."}</p>`}
-      <div class="actions"><a href="${cam.page}" target="_blank" rel="noopener">Official page</a></div>
+      <p class="hint">${action}</p>
+      <div class="actions">${watchLiveButton(cam, cam.kind === "offline" ? "Official page" : "Watch live")}</div>
     </article>`;
   }).join("") || "<p class='hint'>No cameras match the filter.</p>";
-  matched.filter((cam) => cam.kind === "hls").forEach((cam) => playHlsOn($(`wall-${cam.id}`), cam.slug));
+
+  $("wall").querySelectorAll("[data-cam]").forEach((el) => {
+    const open = () => {
+      const cam = cameras.find((c) => c.id === el.dataset.cam);
+      if (!cam) return;
+      wallSelectedId = cam.id;
+      $("wall").querySelectorAll(".wall-item").forEach((card) => {
+        card.classList.toggle("selected", card.dataset.cam === cam.id);
+      });
+      openCameraSheet(cam);
+    };
+    el.addEventListener("click", (event) => {
+      if (event.target.closest("a")) return;
+      open();
+    });
+    el.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        open();
+      }
+    });
+  });
 }
 
-function playHlsOn(video, slug) {
-  if (!video) return;
-  const src = hlsUrl(slug);
-  if (window.Hls && Hls.isSupported()) {
-    const hls = new Hls({ maxBufferLength: 10 });
-    hls.loadSource(src);
-    hls.attachMedia(video);
-  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = src;
-  }
+function renderWall() {
+  renderWallCards();
 }
 
 function renderQueues() {
@@ -461,6 +698,14 @@ function renderSources() {
   `).join("");
 }
 
+function formatAge(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (s < 5) return "now";
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  return `${m}m ago`;
+}
+
 function updateStats() {
   const live = cameras.filter((c) => c.kind === "hls" || c.kind === "page").length;
   const groups = groupedCrossings();
@@ -468,14 +713,36 @@ function updateStats() {
   $("stat-live").textContent = live;
   $("stat-crossings").textContent = groups.length;
   $("stat-trucks").textContent = trucks;
-  $("stat-updated").textContent = queues.updatedAt ? new Date(queues.updatedAt).toLocaleTimeString() : "–";
+  $("stat-updated").textContent = queues.updatedAt ? formatAge(Date.now() - queues.updatedAt) : "–";
+}
+
+function refreshWall() {
+  if (!$("view-wall").classList.contains("active")) return;
+  renderWallCards();
 }
 
 function refreshViews() {
   updateStats();
   drawMap();
   renderQueues();
-  if ($("view-wall").classList.contains("active")) renderWall();
+  refreshWall();
+}
+
+let hlsStatusPromise = null;
+
+async function loadHlsStatus() {
+  if (hlsStatusPromise) return hlsStatusPromise;
+  hlsStatusPromise = (async () => {
+    try {
+      const res = await fetch("/api/hls-status", { signal: AbortSignal.timeout(8000) });
+      const data = await res.json();
+      hlsProxyOk = !!data.ok;
+    } catch {
+      hlsProxyOk = false;
+    }
+    return hlsProxyOk;
+  })();
+  return hlsStatusPromise;
 }
 
 async function loadQueues() {
@@ -491,11 +758,12 @@ async function loadQueues() {
 
 document.querySelectorAll(".tab").forEach((btn) => {
   btn.addEventListener("click", () => {
+    closeCameraSheet();
     document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
     document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
     btn.classList.add("active");
     $(`view-${btn.dataset.view}`).classList.add("active");
-    if (btn.dataset.view === "map" && map) setTimeout(() => map.invalidateSize(), 50);
+    if (btn.dataset.view === "map" && map) setTimeout(() => map && map.invalidateSize(), 50);
     if (btn.dataset.view === "wall") renderWall();
   });
 });
@@ -528,7 +796,14 @@ document.querySelectorAll(".chip").forEach((chip) => {
 });
 
 $("nearest-btn")?.addEventListener("click", locateNearest);
+$("sheet-close")?.addEventListener("click", closeCameraSheet);
+$("camera-sheet")?.addEventListener("close", () => {
+  destroyActiveHls();
+  playGeneration += 1;
+});
 
 renderSources();
+loadHlsStatus();
 loadQueues();
-setInterval(loadQueues, 60000);
+setInterval(loadQueues, 15000);
+setInterval(updateStats, 1000);

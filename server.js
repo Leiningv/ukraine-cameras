@@ -23,7 +23,7 @@ function withTimeout(ms) {
   return AbortSignal.timeout(ms);
 }
 
-function requestRaw(url) {
+function requestRaw(url, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
     const target = new URL(url);
     const lib = target.protocol === "https:" ? https : http;
@@ -34,7 +34,7 @@ function requestRaw(url) {
         path: `${target.pathname}${target.search}`,
         method: "GET",
         rejectUnauthorized: false,
-        timeout: 15000,
+        timeout: timeoutMs,
       },
       (res) => {
         const chunks = [];
@@ -48,8 +48,13 @@ function requestRaw(url) {
         });
       }
     );
-    req.on("error", reject);
+    const timer = setTimeout(() => req.destroy(new Error("Media request timed out")), timeoutMs);
+    req.on("error", (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
     req.on("timeout", () => req.destroy(new Error("Media request timed out")));
+    req.on("close", () => clearTimeout(timer));
     req.end();
   });
 }
@@ -76,6 +81,20 @@ app.get("/api/queues", async (_req, res) => {
     });
   } catch (error) {
     res.status(502).json({ error: error.message });
+  }
+});
+
+app.get("/api/hls-status", async (_req, res) => {
+  const probe = `https://${MEDIA_HOST}:50793/hls/palanca_intrare/index.m3u8`;
+  try {
+    const upstream = await requestRaw(probe, 5000);
+    const body = upstream.body.toString("utf8");
+    res.json({
+      ok: upstream.status >= 200 && upstream.status < 400 && body.includes("#EXTM3U"),
+      status: upstream.status,
+    });
+  } catch (error) {
+    res.json({ ok: false, error: error.message });
   }
 });
 
