@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Ukraine Live Camera Portal</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="/styles.css?v=19" />
+    <link rel="stylesheet" href="/styles.css?v=20" />
   </head>
   <body>
     <div class="app">
@@ -35,7 +35,6 @@
           <label class="search-wrap">
             <input id="search" type="search" placeholder="Search crossings" autocomplete="off" />
           </label>
-          <button type="button" id="nearest-btn" class="nearest-btn">Near me</button>
           <select id="country-filter" aria-label="Border filter">
             <option value="all">All borders</option>
             <option value="Poland" selected>Ukraine–Poland</option>
@@ -56,7 +55,6 @@
           <button type="button" class="chip" data-border="Moldova">Moldova</button>
           <button type="button" class="chip featured" data-border="Ukraine">Uman</button>
         </div>
-        <p id="locate-status" class="locate-status" role="status"></p>
       </section>
     </div>
 
@@ -64,6 +62,8 @@
       <section id="view-map" class="view active">
         <div class="map-wrap">
           <div id="map"></div>
+          <button type="button" id="nearest-btn" class="nearest-btn">Near me</button>
+          <p id="locate-status" class="locate-status" role="status"></p>
         </div>
         <aside id="detail" class="panel">
           <p class="hint">Tap a marker or Near me.</p>
@@ -72,7 +72,7 @@
 
       <section id="view-wall" class="view">
         <div id="wall-stage" class="wall-stage panel">
-          <p class="hint">Tap a camera below. Video plays here if the stream is reachable; otherwise use Watch live.</p>
+          <p class="hint">Tap a camera or Watch live. Video plays in this portal when the stream can be embedded.</p>
         </div>
         <div id="wall" class="wall"></div>
       </section>
@@ -118,7 +118,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
-    <script src="/data.js?v=19"></script>
-    <script src="/app.js?v=19"></script>
+    <script src="/data.js?v=20"></script>
+    <script src="/app.js?v=20"></script>
   </body>
 </html>

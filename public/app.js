@@ -37,8 +37,35 @@ function proxyHlsUrl(slug) {
   return `/api/media?url=${encodeURIComponent(directHlsUrl(slug))}`;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function watchLiveHref(cam) {
-  return cam.page;
+  return cam.page || "";
+}
+
+function embedBlockedHost(url) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    return ["nav.gov.hu", "granica.gov.pl", "worldcam.eu"].some((blocked) => host === blocked || host.endsWith(`.${blocked}`));
+  } catch {
+    return true;
+  }
+}
+
+function cameraPlayUrl(cam) {
+  return cam.embed || (cam.kind === "page" ? cam.page : "");
+}
+
+function youtubeEmbedSrc(cam) {
+  const id = cam.youtube;
+  if (!id) return "";
+  return `https://www.youtube.com/embed/${id}?autoplay=1&mute=1`;
 }
 
 function destroyActiveHls() {
@@ -211,33 +238,42 @@ function setLocateStatus(message, kind = "") {
   el.className = `locate-status ${kind}`.trim();
 }
 
+function officialPageLink(cam, label = "Open official page", quiet = false) {
+  const href = watchLiveHref(cam);
+  if (!href) return "";
+  return `<a class="official-link${quiet ? " quiet" : ""}" href="${escapeHtml(href)}" target="_blank" rel="noopener">${label}</a>`;
+}
+
 function watchLiveButton(cam, label = "Watch live") {
-  return `<a class="watch-live" href="${watchLiveHref(cam)}" target="_blank" rel="noopener">${label}</a>`;
+  if (cam.kind === "offline") {
+    return officialPageLink(cam, "Official page");
+  }
+  return `<button type="button" class="watch-live" data-watch="${escapeHtml(cam.id)}">${label}</button>`;
 }
 
 function fallbackMessage(cam) {
-  if (cam.kind === "page") {
-    return cam.note || "This camera is on an official page, not a direct video stream.";
-  }
   if (cam.kind === "offline") {
-    return cam.note || "No public live feed.";
+    return cam.note || "No public live feed. This camera cannot play in the portal.";
+  }
+  if (cam.kind === "page") {
+    return "This official site blocks in-app playback (or the camera is not a direct stream). Open the official page to watch.";
   }
   if (hlsProxyOk === false) {
-    return "This network cannot reach Moldova’s camera server (port 50793). Open the official page to watch if your phone or another network allows it.";
+    return "This network cannot reach Moldova’s camera server (port 50793). Open the official page if your phone or another network allows it.";
   }
-  return "If the video does not start, open the official live page.";
+  return "The live stream could not start here. Open the official page if you still need the picture.";
 }
 
 function playerFallbackHtml(cam, statusText) {
   const status = cameraStatus(cam);
-  const title = cam.kind === "offline" ? "Camera offline" : cam.kind === "page" ? "Official live page" : "Live camera";
+  const title = cam.kind === "offline" ? "Camera offline" : cam.kind === "page" ? "Cannot play in this portal" : "Live camera";
   return `
     <div class="player-fallback" data-fallback>
       <div class="player-poster" aria-hidden="true">${cam.kind === "offline" ? "○" : "▶"}</div>
       <span class="badge ${status.cls}">${status.label}</span>
       <p class="player-fallback-title">${title}</p>
       <p class="hint" data-status>${statusText || fallbackMessage(cam)}</p>
-      ${watchLiveButton(cam, cam.kind === "offline" ? "Official page" : "Watch live")}
+      ${officialPageLink(cam, cam.kind === "offline" ? "Official page" : "Open official page")}
     </div>
   `;
 }
@@ -387,15 +423,30 @@ function mountHlsPlayer(host, cam) {
   );
 }
 
+function mountEmbedFrame(host, cam, src) {
+  const title = escapeHtml(cam.name);
+  host.innerHTML = `
+    <iframe class="cam-frame" src="${escapeHtml(src)}" title="${title}" referrerpolicy="no-referrer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+    <p class="hint">If the picture stays blank, this site blocks embedding in other apps.</p>
+    <div class="actions">${officialPageLink(cam, "Open official page", true)}</div>
+  `;
+}
+
 function mountPlayer(host, cam) {
   destroyActiveHls();
   if (!host) return;
-  if (cam.kind === "hls") {
+  if (cam.kind === "hls" && cam.slug) {
     mountHlsPlayer(host, cam);
     return;
   }
-  if (cam.kind === "youtube" && cam.youtube) {
-    host.innerHTML = `<iframe class="cam-frame" src="https://www.youtube.com/embed/${cam.youtube}?autoplay=1&mute=1" title="${cam.name}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  const youtube = youtubeEmbedSrc(cam);
+  if (youtube) {
+    mountEmbedFrame(host, cam, youtube);
+    return;
+  }
+  const playUrl = cameraPlayUrl(cam);
+  if (playUrl && !embedBlockedHost(playUrl)) {
+    mountEmbedFrame(host, cam, playUrl);
     return;
   }
   mountStaticFallback(host, cam);
@@ -423,25 +474,15 @@ function openCameraSheet(cam) {
   const related = nearbyQueues(cam.lat, cam.lng);
   const truckN = related.filter((x) => (queues.trucks || []).includes(x)).reduce((n, x) => n + (x.vehicle_in_active_queues_counts || 0), 0);
   const wait = related.reduce((n, x) => Math.max(n, x.wait_time || 0), 0);
-  let frame = "";
-  if (cam.kind === "page" && cam.page) {
-    frame = `<iframe class="cam-frame" src="${cam.page}" title="${cam.name}" referrerpolicy="no-referrer"></iframe>`;
-  } else if (cam.kind === "youtube" && cam.youtube) {
-    frame = `<iframe class="cam-frame" src="https://www.youtube.com/embed/${cam.youtube}?autoplay=1&mute=1" title="${cam.name}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
-  }
   body.innerHTML = `
     <span class="badge ${status.cls}">${status.label}</span>
-    <h2>${cam.name}</h2>
-    <p>${cam.crossing} · ${cam.border}</p>
+    <h2>${escapeHtml(cam.name)}</h2>
+    <p>${escapeHtml(cam.crossing)} · ${escapeHtml(cam.border)}</p>
     <p class="${waitClass(wait)}">Nearby eQueue: ${truckN} trucks · wait ${formatWait(wait)}</p>
-    ${frame}
     <div data-player></div>
-    <p>${cam.note || "Public camera from the neighbouring border service."}</p>
-    <div class="actions">${watchLiveButton(cam, cam.kind === "offline" ? "Official page" : "Watch live")}</div>
+    <p>${escapeHtml(cam.note || "Public camera from the neighbouring border service.")}</p>
   `;
-  if (cam.kind === "hls" || cam.kind === "offline") {
-    mountPlayer(body.querySelector("[data-player]"), cam);
-  }
+  mountPlayer(body.querySelector("[data-player]"), cam);
   revealCameraSheet(sheet);
 }
 
@@ -677,12 +718,12 @@ function renderWallCards() {
   $("wall").innerHTML = matched.map((cam) => {
     const status = cameraStatus(cam);
     const selected = cam.id === wallSelectedId ? " selected" : "";
-    const action = cam.kind === "hls" ? "Tap to open" : cam.kind === "page" ? "Official live page" : "Offline";
+    const action = cam.kind === "hls" || cam.kind === "youtube" || cam.kind === "page" ? "Watch live in this portal" : "Offline";
     return `
     <article class="wall-item cam-card${selected}" data-cam="${cam.id}" tabindex="0" role="button">
       <span class="badge ${status.cls}">${status.label}</span>
-      <h3>${cam.name}</h3>
-      <p>${cam.crossing}</p>
+      <h3>${escapeHtml(cam.name)}</h3>
+      <p>${escapeHtml(cam.crossing)}</p>
       <p class="hint">${action}</p>
       <div class="actions">${watchLiveButton(cam, cam.kind === "offline" ? "Official page" : "Watch live")}</div>
     </article>`;
@@ -699,7 +740,7 @@ function renderWallCards() {
       openCameraSheet(cam);
     };
     el.addEventListener("click", (event) => {
-      if (event.target.closest("a")) return;
+      if (event.target.closest("a, [data-watch]")) return;
       open();
     });
     el.addEventListener("keydown", (event) => {
@@ -847,6 +888,15 @@ function setBorderFilter(value) {
 
 document.querySelectorAll(".chip").forEach((chip) => {
   chip.addEventListener("click", () => setBorderFilter(chip.dataset.border));
+});
+
+document.addEventListener("click", (event) => {
+  const btn = event.target.closest("[data-watch]");
+  if (!btn) return;
+  const cam = cameras.find((c) => c.id === btn.dataset.watch);
+  if (!cam) return;
+  event.preventDefault();
+  openCameraSheet(cam);
 });
 
 $("nearest-btn")?.addEventListener("click", locateNearest);
