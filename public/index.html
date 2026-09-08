@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Ukraine Live Camera Portal</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="/styles.css?v=3" />
+    <link rel="stylesheet" href="/styles.css?v=4" />
   </head>
   <body>
     <div class="app">
@@ -36,18 +36,18 @@
           <p id="locate-status" class="locate-status" role="status"></p>
         </div>
         <div class="chips" id="border-chips">
-          <button type="button" class="chip active" data-border="all">All borders</button>
-          <button type="button" class="chip featured" data-border="Poland">Ukraine–Poland</button>
+          <button type="button" class="chip" data-border="all">All borders</button>
+          <button type="button" class="chip featured active" data-border="Poland">Ukraine–Poland</button>
           <button type="button" class="chip" data-border="Slovakia">Slovakia</button>
           <button type="button" class="chip" data-border="Hungary">Hungary</button>
           <button type="button" class="chip" data-border="Romania">Romania</button>
           <button type="button" class="chip" data-border="Moldova">Moldova</button>
         </div>
         <div class="filters">
-          <input id="search" type="search" placeholder="Search a crossing or camera" />
+          <input id="search" type="search" placeholder="Type a letter, e.g. P" autocomplete="off" />
           <select id="country-filter" aria-label="Border filter">
             <option value="all">All borders</option>
-            <option value="Poland">Ukraine–Poland (all 9 crossings)</option>
+            <option value="Poland" selected>Ukraine–Poland</option>
             <option value="Slovakia">Slovakia</option>
             <option value="Hungary">Hungary</option>
             <option value="Romania">Romania</option>
@@ -114,7 +114,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
-    <script src="/data.js"></script>
-    <script src="/app.js?v=3"></script>
+    <script src="/data.js?v=4"></script>
+    <script src="/app.js?v=4"></script>
   </body>
 </html>

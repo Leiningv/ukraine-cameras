@@ -1,8 +1,16 @@
 const cameras = window.PORTAL_DATA.cameras;
-const extraCrossings = window.PORTAL_DATA.extraCrossings;
-const polandUkraineCrossings = window.PORTAL_DATA.polandUkraineCrossings || [];
+const extraCrossings = window.PORTAL_DATA.extraCrossings || [];
+const borderCrossings = window.PORTAL_DATA.borderCrossings || {};
+const polandUkraineCrossings = borderCrossings.Poland || [];
 const countries = window.PORTAL_DATA.countries;
 const sources = window.PORTAL_DATA.sources;
+const BORDER_LABELS = {
+  Poland: "Ukraine–Poland",
+  Slovakia: "Ukraine–Slovakia",
+  Hungary: "Ukraine–Hungary",
+  Romania: "Ukraine–Romania",
+  Moldova: "Ukraine–Moldova",
+};
 
 let queues = { trucks: [], buses: [], updatedAt: 0 };
 let map;
@@ -129,8 +137,8 @@ function groupedCrossings() {
     return best;
   }
 
-  for (const crossing of polandUkraineCrossings) {
-    seed(crossing, crossing.id);
+  for (const list of Object.values(borderCrossings)) {
+    for (const crossing of list) seed(crossing, crossing.id);
   }
 
   for (const item of queues.trucks || []) {
@@ -157,24 +165,37 @@ function selectedBorder() {
   return $("country-filter").value;
 }
 
+function isCountryView() {
+  return selectedBorder() !== "all";
+}
+
 function isPolandView() {
   return selectedBorder() === "Poland";
+}
+
+function searchBlob(value) {
+  return [value.name, value.crossing, value.country, value.border, value.title, value.extra]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function matchesSearch(value, q) {
+  if (!q) return true;
+  const blob = searchBlob(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const needle = q.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (blob.includes(needle)) return true;
+  return blob.split(/[^a-z0-9а-яіїєґ]+/i).some((word) => word.startsWith(needle));
 }
 
 function filterText(value) {
   const q = $("search").value.trim().toLowerCase();
   const country = selectedBorder();
-  const liveOnly = $("live-only").checked && !isPolandView();
+  const liveOnly = $("live-only").checked && !isCountryView();
   if (country !== "all" && !String(value.country || "").includes(country) && !String(value.border || "").includes(country)) {
     return false;
   }
   if (liveOnly && value.kind && value.kind !== "hls" && value.kind !== "page") return false;
-  if (!q) return true;
-  return [value.name, value.crossing, value.country, value.border, value.title, value.extra]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase()
-    .includes(q);
+  return matchesSearch(value, q);
 }
 
 function setLocateStatus(message, kind = "") {
@@ -408,19 +429,22 @@ function showCamera(cam) {
   openCameraSheet(cam);
 }
 
-function showPolandList(groups) {
-  const list = groups.filter((g) => g.country === "Poland");
+function showBorderList(groups) {
+  const country = selectedBorder();
+  const list = country === "all" ? groups : groups.filter((g) => g.country === country);
+  const q = $("search").value.trim();
+  const label = BORDER_LABELS[country] || "All borders";
   $("detail").innerHTML = `
-    <span class="badge page">Ukraine–Poland</span>
-    <h2>All ${list.length} road crossings</h2>
-    <p>Every operating Ukraine–Poland checkpoint, including cars and pedestrians. Cameras on this border have been off since 24 Feb 2022; live truck/bus counts still update from eQueue.</p>
+    <span class="badge page">${label}</span>
+    <h2>${q ? `${list.length} crossing${list.length === 1 ? "" : "s"} matching “${q}”` : `All ${list.length} road crossings`}</h2>
+    <p>${country === "all" ? "Pick a border above, or tap a crossing." : `Every operating ${label} checkpoint. Live truck/bus counts update from eQueue.`}</p>
     <div class="crossing-list">
       ${list.map((g) => `
         <button type="button" data-crossing="${g.key}">
           <strong>${g.name}</strong><br>
           <span class="hint">${g.extra || "road crossing"} · trucks ${g.trucks} · wait ${formatWait(g.truckWait)}</span>
         </button>
-      `).join("")}
+      `).join("") || `<p class="hint">No crossings match “${q}”.</p>`}
     </div>
   `;
   $("detail").querySelectorAll("[data-crossing]").forEach((el) => {
@@ -432,6 +456,10 @@ function showPolandList(groups) {
       }
     });
   });
+}
+
+function showPolandList(groups) {
+  showBorderList(groups);
 }
 
 function showCrossing(group, extras = {}) {
@@ -450,7 +478,7 @@ function showCrossing(group, extras = {}) {
         return `<div class="cam-card" data-cam="${cam.id}"><span class="badge ${status.cls}">${status.label}</span><h3>${cam.name}</h3><p>${cam.note || cam.border}</p></div>`;
       }).join("") || "<p class='hint'>No public camera at this crossing.</p>"}
     </div>
-    ${isPolandView() ? `<div class="actions"><button type="button" id="back-pl">All Ukraine–Poland crossings</button></div>` : ""}
+    ${isCountryView() ? `<div class="actions"><button type="button" id="back-pl">All ${BORDER_LABELS[selectedBorder()] || "crossings"}</button></div>` : ""}
   `;
   $("detail").querySelectorAll("[data-cam]").forEach((el) => {
     el.addEventListener("click", () => {
@@ -460,7 +488,7 @@ function showCrossing(group, extras = {}) {
   });
   $("back-pl")?.addEventListener("click", () => {
     $("detail").dataset.pinned = "";
-    showPolandList(groupedCrossings().filter(filterText));
+    showBorderList(groupedCrossings().filter(filterText));
   });
   $("detail").scrollIntoView({ behavior: "smooth", block: "end" });
 }
@@ -500,9 +528,9 @@ function placeUserMarker() {
 
 function drawMap() {
   if (!map) {
-    map = L.map("map").setView([48.4, 25.5], 6);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap",
+    map = L.map("map", { zoomControl: true, attributionControl: true }).setView([49.8, 23.2], 8);
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: "&copy; OpenStreetMap &copy; CARTO",
     }).addTo(map);
   }
   markers.forEach((m) => m.remove());
@@ -515,7 +543,7 @@ function drawMap() {
   for (const group of groups) {
     const isNearest = nearestKeyHighlight === group.key;
     const marker = L.circleMarker([group.lat, group.lng], {
-      radius: isNearest ? 12 : 8,
+      radius: isNearest ? 12 : 9,
       color: isNearest ? "#ffd15a" : markerColor(group),
       fillColor: isNearest ? "#ffd15a" : markerColor(group),
       fillOpacity: 0.95,
@@ -525,27 +553,14 @@ function drawMap() {
     marker.on("click", () => showCrossing(group));
     markers.push(marker);
   }
-  for (const cam of cameras.filter(filterText)) {
-    if (cam.kind !== "hls" && cam.kind !== "page" && cam.kind !== "offline") continue;
-    const marker = L.circleMarker([cam.lat, cam.lng], {
-      radius: cam.kind === "offline" ? 4 : 5,
-      color: cam.kind === "offline" ? "#8899aa" : "#ffd15a",
-      fillColor: cam.kind === "offline" ? "#8899aa" : "#ffd15a",
-      fillOpacity: 0.9,
-    }).addTo(map);
-    marker.bindTooltip(`Camera: ${cam.name}`);
-    marker.on("click", () => showCamera(cam));
-    markers.push(marker);
-  }
   placeUserMarker();
-  if (isPolandView() && groups.length) {
-    if (pendingFit && !nearestKeyHighlight) {
-      const bounds = L.latLngBounds(groups.map((g) => [g.lat, g.lng]));
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 8 });
-      pendingFit = false;
-    }
-    if (!$("detail").dataset.pinned) showPolandList(groups);
+  if (groups.length && pendingFit && !nearestKeyHighlight) {
+    const bounds = L.latLngBounds(groups.map((g) => [g.lat, g.lng]));
+    map.fitBounds(bounds, { padding: [36, 36], maxZoom: groups.length < 4 ? 9 : 8 });
+    pendingFit = false;
+    setTimeout(() => map.invalidateSize(), 80);
   }
+  if (!$("detail").dataset.pinned) showBorderList(groups);
 }
 
 function showMapView() {
@@ -776,15 +791,17 @@ function setBorderFilter(value) {
   pendingFit = true;
   nearestKeyHighlight = null;
   nearestDistanceKm = null;
-  if (value === "Poland") {
-    $("live-only").checked = false;
-    $("detail").dataset.pinned = "";
-  }
+  $("detail").dataset.pinned = "";
+  if (value !== "all") $("live-only").checked = false;
+  showMapView();
   refreshViews();
 }
 
 ["search", "country-filter", "live-only"].forEach((id) => {
-  $(id).addEventListener("input", refreshViews);
+  $(id).addEventListener("input", () => {
+    if (id === "search") $("detail").dataset.pinned = "";
+    refreshViews();
+  });
   $(id).addEventListener("change", () => {
     if (id === "country-filter") setBorderFilter($("country-filter").value);
     else refreshViews();
@@ -804,6 +821,8 @@ $("camera-sheet")?.addEventListener("close", () => {
 
 renderSources();
 loadHlsStatus();
+pendingFit = true;
+setBorderFilter("Poland");
 loadQueues();
 setInterval(loadQueues, 15000);
 setInterval(updateStats, 1000);
