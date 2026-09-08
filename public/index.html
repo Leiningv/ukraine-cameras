@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Ukraine Live Camera Portal</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="chrome">
+      <header class="top">
+        <div>
+          <p class="eyebrow">Ukraine · borders · public cameras</p>
+          <h1>Live Camera Portal</h1>
+        </div>
+        <div class="stats" id="stats">
+          <div><strong id="stat-live">0</strong><span>live cameras</span></div>
+          <div><strong id="stat-crossings">0</strong><span>crossings</span></div>
+          <div><strong id="stat-trucks">–</strong><span>trucks in eQueue</span></div>
+          <div><strong id="stat-updated">–</strong><span>last update</span></div>
+        </div>
+      </header>
+
+      <nav class="tabs" aria-label="Views">
+        <button class="tab active" data-view="map">Map</button>
+        <button class="tab" data-view="wall">Cameras</button>
+        <button class="tab" data-view="queues">Queues</button>
+        <button class="tab" data-view="sources">Sources</button>
+      </nav>
+
+      <section class="toolbar">
+        <div class="locate-row">
+          <button type="button" id="nearest-btn" class="nearest-btn">Nearest to me</button>
+          <p id="locate-status" class="locate-status" role="status"></p>
+        </div>
+        <div class="chips" id="border-chips">
+          <button type="button" class="chip active" data-border="all">All borders</button>
+          <button type="button" class="chip featured" data-border="Poland">Ukraine–Poland</button>
+          <button type="button" class="chip" data-border="Slovakia">Slovakia</button>
+          <button type="button" class="chip" data-border="Hungary">Hungary</button>
+          <button type="button" class="chip" data-border="Romania">Romania</button>
+          <button type="button" class="chip" data-border="Moldova">Moldova</button>
+        </div>
+        <div class="filters">
+          <input id="search" type="search" placeholder="Search a crossing or camera" />
+          <select id="country-filter" aria-label="Border filter">
+            <option value="all">All borders</option>
+            <option value="Poland">Ukraine–Poland (all 9 crossings)</option>
+            <option value="Slovakia">Slovakia</option>
+            <option value="Hungary">Hungary</option>
+            <option value="Romania">Romania</option>
+            <option value="Moldova">Moldova</option>
+          </select>
+          <label class="check"><input id="live-only" type="checkbox" /> Live cameras only</label>
+        </div>
+      </section>
+    </div>
+
+    <main>
+      <section id="view-map" class="view active">
+        <div id="map"></div>
+        <aside id="detail" class="panel">
+          <p class="hint">Tap a marker or use Nearest to me.</p>
+        </aside>
+      </section>
+
+      <section id="view-wall" class="view">
+        <div id="wall" class="wall"></div>
+      </section>
+
+      <section id="view-queues" class="view">
+        <div id="queue-cards" class="queue-cards"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Crossing</th>
+                <th>Country</th>
+                <th>Traffic</th>
+                <th>Trucks</th>
+                <th>Truck wait</th>
+                <th>Buses</th>
+                <th>Camera</th>
+              </tr>
+            </thead>
+            <tbody id="queue-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-sources" class="view">
+        <div id="sources" class="source-grid"></div>
+      </section>
+    </main>
+
+    <p class="note">
+      Public feeds only. Most Ukraine-side and Poland–Ukraine border webcams have been off since 24 February 2022.
+      Queue numbers come from the official eQueue service. Your location stays in this browser and is never sent to a server.
+    </p>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+    <script src="/data.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+# Static frontend only. Live cameras (/api/media) and queues (/api/queues)
+# need the Node Express server. See DEPLOY.md — Netlify is not the primary host.
+
+[build]
+  publish = "public"

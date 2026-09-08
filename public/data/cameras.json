@@ -1,0 +1,468 @@
+{
+  "note": "Public official camera pages and HLS slugs. Ukraine–Poland live cameras have been off since 24 Feb 2022.",
+  "sites": [
+    {
+      "id": "ua-pl-yahodyn",
+      "name": "Yahodyn – Dorohusk",
+      "country": "Poland",
+      "lat": 51.18809,
+      "lng": 23.8105,
+      "live": false,
+      "offlineReason": "Public cameras on both sides have been switched off since 24 February 2022."
+    },
+    {
+      "id": "ua-pl-ustyluh",
+      "name": "Ustyluh – Zosin",
+      "country": "Poland",
+      "lat": 50.8561,
+      "lng": 24.14366,
+      "live": false,
+      "offlineReason": "Public cameras on both sides have been switched off since 24 February 2022."
+    },
+    {
+      "id": "ua-pl-uhryniv",
+      "name": "Uhryniv – Dołhobyczów",
+      "country": "Poland",
+      "lat": 50.57843,
+      "lng": 24.0913,
+      "live": false,
+      "offlineReason": "Public cameras on both sides have been switched off since 24 February 2022."
+    },
+    {
+      "id": "ua-pl-rava",
+      "name": "Rava-Ruska – Hrebenne",
+      "country": "Poland",
+      "lat": 50.27271,
+      "lng": 23.59043,
+      "live": false,
+      "offlineReason": "Public cameras on both sides have been switched off since 24 February 2022."
+    },
+    {
+      "id": "ua-pl-hrushiv",
+      "name": "Hrushiv – Budomierz",
+      "country": "Poland",
+      "lat": 50.09688,
+      "lng": 23.27999,
+      "live": false,
+      "offlineReason": "Public cameras on both sides have been switched off since 24 February 2022."
+    },
+    {
+      "id": "ua-pl-krakovets",
+      "name": "Krakovets – Korczowa",
+      "country": "Poland",
+      "lat": 49.95469,
+      "lng": 23.11621,
+      "live": false,
+      "offlineReason": "Public cameras on both sides have been switched off since 24 February 2022."
+    },
+    {
+      "id": "ua-pl-shehyni",
+      "name": "Shehyni – Medyka",
+      "country": "Poland",
+      "lat": 49.79911,
+      "lng": 22.95007,
+      "live": false,
+      "offlineReason": "Public cameras on both sides have been switched off since 24 February 2022."
+    },
+    {
+      "id": "ua-pl-nyzhankovychi",
+      "name": "Nyzhankovychi – Malhowice",
+      "country": "Poland",
+      "lat": 49.69575,
+      "lng": 22.81647,
+      "live": false,
+      "offlineReason": "No public live camera. Passenger crossing."
+    },
+    {
+      "id": "ua-pl-smilnytsia",
+      "name": "Smilnytsia – Krościenko",
+      "country": "Poland",
+      "lat": 49.48109,
+      "lng": 22.70148,
+      "live": false,
+      "offlineReason": "Public cameras on both sides have been switched off since 24 February 2022."
+    },
+    {
+      "id": "ua-sk-uzhhorod",
+      "name": "Uzhhorod – Vyšné Nemecké",
+      "country": "Slovakia",
+      "lat": 48.65319,
+      "lng": 22.26544,
+      "live": false,
+      "offlineReason": "No public live camera at this crossing. Queue data is live."
+    },
+    {
+      "id": "ua-sk-bereznyi",
+      "name": "Malyi Bereznyi – Ubľa",
+      "country": "Slovakia",
+      "lat": 48.85216,
+      "lng": 22.44635,
+      "live": false,
+      "offlineReason": "No public live camera. Weight limit 3.5 tons."
+    },
+    {
+      "id": "ua-sk-selmentsi",
+      "name": "Mali Selmentsi – Veľké Slemence",
+      "country": "Slovakia",
+      "lat": 48.5084,
+      "lng": 22.1558,
+      "live": false,
+      "offlineReason": "No public live camera. Local passenger crossing."
+    },
+    {
+      "id": "ua-hu-chop",
+      "name": "Chop (Tysa) – Záhony",
+      "country": "Hungary",
+      "lat": 48.41756,
+      "lng": 22.16981,
+      "live": true,
+      "page": "https://nav.gov.hu/vam/hataratkelohelyi-kamerak",
+      "pageLabel": "Hungary NAV live cameras"
+    },
+    {
+      "id": "ua-hu-luzhanka",
+      "name": "Luzhanka – Beregsurány",
+      "country": "Hungary",
+      "lat": 48.16533,
+      "lng": 22.57417,
+      "live": false,
+      "offlineReason": "No public live camera. Queue data is live."
+    },
+    {
+      "id": "ua-hu-vylok",
+      "name": "Vylok – Tiszabecs",
+      "country": "Hungary",
+      "lat": 48.1092,
+      "lng": 22.8375,
+      "live": false,
+      "offlineReason": "No public live camera. Passenger crossing."
+    },
+    {
+      "id": "ua-ro-porubne",
+      "name": "Porubne – Siret",
+      "country": "Romania",
+      "lat": 47.98891,
+      "lng": 26.06002,
+      "live": false,
+      "offlineReason": "No public live camera. Queue data is live."
+    },
+    {
+      "id": "ua-ro-dyakivtsi",
+      "name": "Dyakivtsi – Racovăț",
+      "country": "Romania",
+      "lat": 48.0993,
+      "lng": 26.28055,
+      "live": false,
+      "offlineReason": "No public live camera. Queue data is live."
+    },
+    {
+      "id": "ua-ro-krasnoilsk",
+      "name": "Krasnoilsk – Vicovu de Sus",
+      "country": "Romania",
+      "lat": 47.94735,
+      "lng": 25.62075,
+      "live": false,
+      "offlineReason": "No public live camera. Queue data is live."
+    },
+    {
+      "id": "ua-ro-diakove",
+      "name": "Diakove – Halmeu",
+      "country": "Romania",
+      "lat": 47.9991,
+      "lng": 23.00199,
+      "live": false,
+      "offlineReason": "No public live camera. Queue data is live."
+    },
+    {
+      "id": "ua-ro-orlivka",
+      "name": "Orlivka – Isaccea",
+      "country": "Romania",
+      "lat": 45.29302,
+      "lng": 28.45777,
+      "live": false,
+      "offlineReason": "No public live camera. Queue data is live."
+    },
+    {
+      "id": "ua-ro-solotvyno",
+      "name": "Solotvyno – Sighetu Marmației",
+      "country": "Romania",
+      "lat": 47.9466,
+      "lng": 23.8689,
+      "live": false,
+      "offlineReason": "No public live camera. Passenger crossing."
+    },
+    {
+      "id": "cam-palanca-in",
+      "name": "Palanca inbound",
+      "crossing": "Maiaky-Udobne – Palanca",
+      "country": "Moldova",
+      "lat": 46.38518,
+      "lng": 30.08781,
+      "live": true,
+      "hls": "palanca_intrare",
+      "page": "https://border.gov.md/camere-web/palanca-intrare"
+    },
+    {
+      "id": "cam-palanca-out",
+      "name": "Palanca outbound",
+      "crossing": "Maiaky-Udobne – Palanca",
+      "country": "Moldova",
+      "lat": 46.3861,
+      "lng": 30.0892,
+      "live": true,
+      "hls": "palanca_iesire",
+      "page": "https://border.gov.md/camere-web/palanca-iesire"
+    },
+    {
+      "id": "cam-tudora-in",
+      "name": "Tudora inbound",
+      "crossing": "Starokozache – Tudora",
+      "country": "Moldova",
+      "lat": 46.37746,
+      "lng": 29.98717,
+      "live": true,
+      "hls": "tudora_intrare",
+      "page": "https://border.gov.md/camere-web/tudora-intrare"
+    },
+    {
+      "id": "cam-tudora-out",
+      "name": "Tudora outbound",
+      "crossing": "Starokozache – Tudora",
+      "country": "Moldova",
+      "lat": 46.3782,
+      "lng": 29.9884,
+      "live": true,
+      "hls": "tudora_iesire",
+      "page": "https://border.gov.md/camere-web/tudora-iesire"
+    },
+    {
+      "id": "cam-otaci",
+      "name": "Otaci outbound",
+      "crossing": "Mohyliv-Podilskyi – Otaci",
+      "country": "Moldova",
+      "lat": 48.44454,
+      "lng": 27.79094,
+      "live": true,
+      "hls": "otaci_iesire",
+      "page": "https://border.gov.md/camere-web/otaci-iesire"
+    },
+    {
+      "id": "cam-saiti-in",
+      "name": "Săiți inbound",
+      "crossing": "Lisne – Săiți",
+      "country": "Moldova",
+      "lat": 46.52,
+      "lng": 29.87,
+      "live": true,
+      "hls": "saiti_intrare",
+      "page": "https://border.gov.md/camere-web/saiti-intrare"
+    },
+    {
+      "id": "cam-saiti-out",
+      "name": "Săiți outbound",
+      "crossing": "Lisne – Săiți",
+      "country": "Moldova",
+      "lat": 46.5212,
+      "lng": 29.8715,
+      "live": true,
+      "hls": "saiti_iesire",
+      "page": "https://border.gov.md/camere-web/saiti-iesire"
+    },
+    {
+      "id": "cam-briceni",
+      "name": "Briceni outbound",
+      "crossing": "Rososhany – Briceni",
+      "country": "Moldova",
+      "lat": 48.37626,
+      "lng": 27.04643,
+      "live": true,
+      "hls": "briceni_iesire",
+      "page": "https://border.gov.md/camere-web/briceni-iesire"
+    },
+    {
+      "id": "cam-grimancauti",
+      "name": "Grimăncăuți outbound",
+      "crossing": "Vashkivtsi – Grimăncăuți",
+      "country": "Moldova",
+      "lat": 48.33,
+      "lng": 26.77,
+      "live": true,
+      "hls": "grimancauti_iesire",
+      "page": "https://border.gov.md/camere-web/grimancauti-iesire"
+    },
+    {
+      "id": "cam-larga",
+      "name": "Larga outbound",
+      "crossing": "Kelmentsi – Larga",
+      "country": "Moldova",
+      "lat": 48.38,
+      "lng": 26.85,
+      "live": true,
+      "hls": "larga_iesire",
+      "page": "https://border.gov.md/camere-web/larga-iesire"
+    },
+    {
+      "id": "cam-ocnita",
+      "name": "Ocnița outbound",
+      "crossing": "Sokyriany – Ocnița",
+      "country": "Moldova",
+      "lat": 48.43881,
+      "lng": 27.46271,
+      "live": true,
+      "hls": "ocnita_iesire",
+      "page": "https://border.gov.md/camere-web/ocnita-iesire"
+    },
+    {
+      "id": "cam-criva",
+      "name": "Criva outbound",
+      "crossing": "Mamalyha – Criva",
+      "country": "Moldova",
+      "lat": 48.26456,
+      "lng": 26.62331,
+      "live": true,
+      "hls": "criva_iesire",
+      "page": "https://border.gov.md/camere-web/criva-iesire"
+    },
+    {
+      "id": "cam-vulcanesti-in",
+      "name": "Vulcănești inbound",
+      "crossing": "Vynohradivka – Vulcănești",
+      "country": "Moldova",
+      "lat": 45.70202,
+      "lng": 28.5387,
+      "live": true,
+      "hls": "vulcanesti_intrare",
+      "page": "https://border.gov.md/camere-web/vulcanesti-intrare"
+    },
+    {
+      "id": "cam-vulcanesti-out",
+      "name": "Vulcănești outbound",
+      "crossing": "Vynohradivka – Vulcănești",
+      "country": "Moldova",
+      "lat": 45.7031,
+      "lng": 28.54,
+      "live": true,
+      "hls": "vulcanesti_iesire",
+      "page": "https://border.gov.md/camere-web/vulcanesti-iesire"
+    },
+    {
+      "id": "cam-mirnoe-in",
+      "name": "Mirne inbound",
+      "crossing": "Tabaky – Mirne",
+      "country": "Moldova",
+      "lat": 45.73131,
+      "lng": 28.58108,
+      "live": true,
+      "hls": "mirnoe_intrare",
+      "page": "https://border.gov.md/camere-web/mirnoe-intrare"
+    },
+    {
+      "id": "cam-mirnoe-out",
+      "name": "Mirne outbound",
+      "crossing": "Tabaky – Mirne",
+      "country": "Moldova",
+      "lat": 45.7322,
+      "lng": 28.5824,
+      "live": true,
+      "hls": "mirnoe_iesire",
+      "page": "https://border.gov.md/camere-web/mirnoe-iesire"
+    },
+    {
+      "id": "ua-md-reni",
+      "name": "Reni – Giurgiulești",
+      "country": "Moldova",
+      "lat": 45.48193,
+      "lng": 28.22667,
+      "live": false,
+      "offlineReason": "No dedicated public camera stream. Queue data is live."
+    },
+    {
+      "id": "cam-leuseni-in",
+      "name": "Leușeni inbound",
+      "crossing": "Leușeni – Albița (MD–RO)",
+      "country": "Moldova",
+      "lat": 46.7947,
+      "lng": 28.1664,
+      "live": true,
+      "hls": "leuseni_intrare",
+      "page": "https://border.gov.md/camere-web/leuseni-intrare"
+    },
+    {
+      "id": "cam-leuseni-out",
+      "name": "Leușeni outbound",
+      "crossing": "Leușeni – Albița (MD–RO)",
+      "country": "Moldova",
+      "lat": 46.796,
+      "lng": 28.168,
+      "live": true,
+      "hls": "leuseni_iesire",
+      "page": "https://border.gov.md/camere-web/leuseni-iesire"
+    },
+    {
+      "id": "cam-sculeni-in",
+      "name": "Sculeni inbound",
+      "crossing": "Sculeni – Sculeni (MD–RO)",
+      "country": "Moldova",
+      "lat": 47.316,
+      "lng": 27.62,
+      "live": true,
+      "hls": "sculeni_intrare",
+      "page": "https://border.gov.md/camere-web/sculeni-intrare"
+    },
+    {
+      "id": "cam-sculeni-out",
+      "name": "Sculeni outbound",
+      "crossing": "Sculeni – Sculeni (MD–RO)",
+      "country": "Moldova",
+      "lat": 47.3172,
+      "lng": 27.6215,
+      "live": true,
+      "hls": "sculeni_iesire",
+      "page": "https://border.gov.md/camere-web/sculeni-iesire"
+    },
+    {
+      "id": "cam-giurgiulesti-in",
+      "name": "Giurgiulești inbound",
+      "crossing": "Giurgiulești – Galați (MD–RO)",
+      "country": "Moldova",
+      "lat": 45.4819,
+      "lng": 28.197,
+      "live": true,
+      "hls": "giurgiulesti_intrare",
+      "page": "https://border.gov.md/camere-web/giurgiulesti-intrare"
+    },
+    {
+      "id": "cam-giurgiulesti-out",
+      "name": "Giurgiulești outbound",
+      "crossing": "Giurgiulești – Galați (MD–RO)",
+      "country": "Moldova",
+      "lat": 45.483,
+      "lng": 28.1985,
+      "live": true,
+      "hls": "giurgiulesti_iesire",
+      "page": "https://border.gov.md/camere-web/giurgiulesti-iesire"
+    },
+    {
+      "id": "cam-cahul-in",
+      "name": "Cahul inbound",
+      "crossing": "Cahul – Oancea (MD–RO)",
+      "country": "Moldova",
+      "lat": 45.904,
+      "lng": 28.189,
+      "live": true,
+      "hls": "cahul_intrare",
+      "page": "https://border.gov.md/camere-web/cahul-intrare"
+    },
+    {
+      "id": "cam-cahul-out",
+      "name": "Cahul outbound",
+      "crossing": "Cahul – Oancea (MD–RO)",
+      "country": "Moldova",
+      "lat": 45.9052,
+      "lng": 28.1904,
+      "live": true,
+      "hls": "cahul_iesire",
+      "page": "https://border.gov.md/camere-web/cahul-iesire"
+    }
+  ]
+}
