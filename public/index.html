@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Ukraine Live Camera Portal</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="/styles.css?v=6" />
+    <link rel="stylesheet" href="/styles.css?v=17" />
   </head>
   <body>
     <div class="app">
     <div class="chrome">
       <header class="top">
-        <div>
+        <div class="brand">
           <p class="eyebrow">Ukraine · borders · public cameras</p>
           <h1>Live Camera Portal</h1>
         </div>
@@ -19,7 +19,7 @@
           <div><strong id="stat-live">0</strong><span>live cameras</span></div>
           <div><strong id="stat-crossings">0</strong><span>crossings</span></div>
           <div><strong id="stat-trucks">–</strong><span>trucks in eQueue</span></div>
-          <div><strong id="stat-updated">–</strong><span>updated</span></div>
+          <div class="stat-updated"><strong id="stat-updated">–</strong><span>updated</span></div>
         </div>
       </header>
 
@@ -31,20 +31,11 @@
       </nav>
 
       <section class="toolbar">
-        <div class="locate-row">
-          <button type="button" id="nearest-btn" class="nearest-btn">Nearest to me</button>
-          <p id="locate-status" class="locate-status" role="status"></p>
-        </div>
-        <div class="chips" id="border-chips">
-          <button type="button" class="chip" data-border="all">All borders</button>
-          <button type="button" class="chip featured active" data-border="Poland">Ukraine–Poland</button>
-          <button type="button" class="chip" data-border="Slovakia">Slovakia</button>
-          <button type="button" class="chip" data-border="Hungary">Hungary</button>
-          <button type="button" class="chip" data-border="Romania">Romania</button>
-          <button type="button" class="chip" data-border="Moldova">Moldova</button>
-        </div>
         <div class="filters">
-          <input id="search" type="search" placeholder="Type a letter, e.g. P" autocomplete="off" />
+          <label class="search-wrap">
+            <input id="search" type="search" placeholder="Search crossings" autocomplete="off" />
+          </label>
+          <button type="button" id="nearest-btn" class="nearest-btn">Near me</button>
           <select id="country-filter" aria-label="Border filter">
             <option value="all">All borders</option>
             <option value="Poland" selected>Ukraine–Poland</option>
@@ -52,17 +43,30 @@
             <option value="Hungary">Hungary</option>
             <option value="Romania">Romania</option>
             <option value="Moldova">Moldova</option>
+            <option value="Ukraine">Uman / Ukraine</option>
           </select>
           <label class="check"><input id="live-only" type="checkbox" /> Live cameras only</label>
         </div>
+        <div class="chips" id="border-chips">
+          <button type="button" class="chip" data-border="all">All</button>
+          <button type="button" class="chip featured active" data-border="Poland">Poland</button>
+          <button type="button" class="chip" data-border="Slovakia">Slovakia</button>
+          <button type="button" class="chip" data-border="Hungary">Hungary</button>
+          <button type="button" class="chip" data-border="Romania">Romania</button>
+          <button type="button" class="chip" data-border="Moldova">Moldova</button>
+          <button type="button" class="chip featured" data-border="Ukraine">Uman</button>
+        </div>
+        <p id="locate-status" class="locate-status" role="status"></p>
       </section>
     </div>
 
     <main>
       <section id="view-map" class="view active">
-        <div id="map"></div>
+        <div class="map-wrap">
+          <div id="map"></div>
+        </div>
         <aside id="detail" class="panel">
-          <p class="hint">Tap a marker or use Nearest to me.</p>
+          <p class="hint">Tap a marker or Near me.</p>
         </aside>
       </section>
 
@@ -114,7 +118,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
-    <script src="/data.js?v=6"></script>
-    <script src="/app.js?v=6"></script>
+    <script src="/data.js?v=17"></script>
+    <script src="/app.js?v=17"></script>
   </body>
 </html>

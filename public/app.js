@@ -10,6 +10,7 @@ const BORDER_LABELS = {
   Hungary: "Ukraine–Hungary",
   Romania: "Ukraine–Romania",
   Moldova: "Ukraine–Moldova",
+  Ukraine: "Uman / Ukraine",
 };
 
 let queues = { trucks: [], buses: [], updatedAt: 0 };
@@ -87,8 +88,13 @@ function waitClass(seconds) {
 
 function cameraStatus(cam) {
   if (cam.kind === "hls") return { label: "Live HLS", cls: "live" };
+  if (cam.kind === "youtube") return { label: "Live stream", cls: "live" };
   if (cam.kind === "page") return { label: "Official live page", cls: "page" };
   return { label: "Offline", cls: "offline" };
+}
+
+function isLiveKind(cam) {
+  return cam.kind === "hls" || cam.kind === "page" || cam.kind === "youtube";
 }
 
 function nearbyQueues(lat, lng) {
@@ -383,11 +389,28 @@ function mountHlsPlayer(host, cam) {
 
 function mountPlayer(host, cam) {
   destroyActiveHls();
+  if (!host) return;
   if (cam.kind === "hls") {
     mountHlsPlayer(host, cam);
     return;
   }
+  if (cam.kind === "youtube" && cam.youtube) {
+    host.innerHTML = `<iframe class="cam-frame" src="https://www.youtube.com/embed/${cam.youtube}?autoplay=1&mute=1" title="${cam.name}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+    return;
+  }
   mountStaticFallback(host, cam);
+}
+
+function revealCameraSheet(sheet) {
+  try {
+    if (typeof sheet.showModal === "function") {
+      if (!sheet.open) sheet.showModal();
+      return;
+    }
+  } catch {
+    /* fall through to attribute fallback */
+  }
+  sheet.setAttribute("open", "");
 }
 
 function openCameraSheet(cam) {
@@ -400,9 +423,12 @@ function openCameraSheet(cam) {
   const related = nearbyQueues(cam.lat, cam.lng);
   const truckN = related.filter((x) => (queues.trucks || []).includes(x)).reduce((n, x) => n + (x.vehicle_in_active_queues_counts || 0), 0);
   const wait = related.reduce((n, x) => Math.max(n, x.wait_time || 0), 0);
-  const frame = cam.kind === "page"
-    ? `<iframe class="cam-frame" src="${cam.page}" title="${cam.name}" referrerpolicy="no-referrer"></iframe>`
-    : "";
+  let frame = "";
+  if (cam.kind === "page" && cam.page) {
+    frame = `<iframe class="cam-frame" src="${cam.page}" title="${cam.name}" referrerpolicy="no-referrer"></iframe>`;
+  } else if (cam.kind === "youtube" && cam.youtube) {
+    frame = `<iframe class="cam-frame" src="https://www.youtube.com/embed/${cam.youtube}?autoplay=1&mute=1" title="${cam.name}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  }
   body.innerHTML = `
     <span class="badge ${status.cls}">${status.label}</span>
     <h2>${cam.name}</h2>
@@ -413,16 +439,19 @@ function openCameraSheet(cam) {
     <p>${cam.note || "Public camera from the neighbouring border service."}</p>
     <div class="actions">${watchLiveButton(cam, cam.kind === "offline" ? "Official page" : "Watch live")}</div>
   `;
-  if (cam.kind === "hls") mountPlayer(body.querySelector("[data-player]"), cam);
-  else if (cam.kind !== "page") mountPlayer(body.querySelector("[data-player]"), cam);
-  if (typeof sheet.showModal === "function" && !sheet.open) sheet.showModal();
+  if (cam.kind === "hls" || cam.kind === "offline") {
+    mountPlayer(body.querySelector("[data-player]"), cam);
+  }
+  revealCameraSheet(sheet);
 }
 
 function closeCameraSheet() {
   destroyActiveHls();
   playGeneration += 1;
   const sheet = $("camera-sheet");
-  if (sheet?.open) sheet.close();
+  if (!sheet) return;
+  if (sheet.open) sheet.close();
+  else sheet.removeAttribute("open");
 }
 
 function showCamera(cam) {
@@ -532,6 +561,7 @@ function drawMap() {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap",
     }).addTo(map);
+    setTimeout(() => map.invalidateSize(), 80);
   }
   markers.forEach((m) => m.remove());
   markers = [];
@@ -626,10 +656,15 @@ function locateNearest() {
 }
 
 function wallCameras() {
+  const q = $("search").value.trim().toLowerCase();
+  const liveOnly = $("live-only").checked;
+  const country = selectedBorder();
   return cameras.filter((cam) => {
-    if (!filterText(cam)) return false;
-    if (cam.kind === "hls" || cam.kind === "page") return true;
-    return isPolandView();
+    if (!matchesSearch(cam, q)) return false;
+    if (liveOnly && !isLiveKind(cam)) return false;
+    if (isLiveKind(cam)) return true;
+    if (country === "all") return true;
+    return String(cam.country || "").includes(country) || String(cam.border || "").includes(country);
   });
 }
 
@@ -816,6 +851,9 @@ document.querySelectorAll(".chip").forEach((chip) => {
 
 $("nearest-btn")?.addEventListener("click", locateNearest);
 $("sheet-close")?.addEventListener("click", closeCameraSheet);
+$("camera-sheet")?.addEventListener("click", (event) => {
+  if (event.target === $("camera-sheet")) closeCameraSheet();
+});
 $("camera-sheet")?.addEventListener("close", () => {
   destroyActiveHls();
   playGeneration += 1;

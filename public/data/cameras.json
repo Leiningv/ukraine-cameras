@@ -2,6 +2,24 @@
   "note": "Public official camera pages and HLS slugs. Ukraine–Poland live cameras have been off since 24 Feb 2022.",
   "sites": [
     {
+      "id": "uman-tzion-live",
+      "name": "Uman · Tzion live cameras",
+      "country": "Ukraine",
+      "lat": 48.74705,
+      "lng": 30.23416,
+      "live": true,
+      "page": "https://uman.radiobreslev.co.il/"
+    },
+    {
+      "id": "uman-city-cams",
+      "name": "Uman city cameras",
+      "country": "Ukraine",
+      "lat": 48.75,
+      "lng": 30.22,
+      "live": true,
+      "page": "https://webcam.uman.ua/"
+    },
+    {
       "id": "ua-pl-yahodyn",
       "name": "Yahodyn – Dorohusk",
       "country": "Poland",
