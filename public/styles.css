@@ -27,8 +27,6 @@ body {
 
 .app {
   min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
   min-width: 0;
   max-width: 100%;
   overflow-x: hidden;
@@ -52,11 +50,8 @@ body {
 }
 
 main {
-  flex: 1 1 auto;
   position: relative;
   z-index: 1;
-  overflow: visible;
-  -webkit-overflow-scrolling: touch;
 }
 
 .top {
@@ -184,12 +179,12 @@ body:not([data-view="map"]) .locate-status {
 
 .view { display: none; }
 .view.active { display: block; }
-#view-map { display: none; padding: 12px 16px; gap: 12px; height: 100%; min-height: 0; min-width: 0; max-width: 100%; }
-#view-map.active { display: grid; grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; }
+#view-map { display: none; padding: 12px 16px 16px; gap: 12px; min-width: 0; max-width: 100%; }
+#view-map.active { display: grid; grid-template-columns: 1fr; }
 .map-wrap {
   position: relative;
+  height: min(46vh, 380px);
   min-height: 220px;
-  height: 100%;
   min-width: 0;
 }
 #map {
@@ -199,7 +194,6 @@ body:not([data-view="map"]) .locate-status {
   overflow: hidden;
   border-radius: 16px;
   border: 1px solid var(--line);
-  min-height: 220px;
   height: 100%;
   width: 100%;
   max-width: 100%;
@@ -212,7 +206,6 @@ body:not([data-view="map"]) .locate-status {
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 16px;
-  overflow: auto;
 }
 .hint { color: var(--muted); }
 .distance { color: var(--gold); font-weight: 700; }
@@ -403,49 +396,6 @@ th { color: var(--muted); font-weight: 600; }
 .wait-mid { color: var(--warn); }
 .wait-bad { color: var(--bad); }
 
-html:has(body[data-view="map"]) {
-  height: 100%;
-  overflow: hidden;
-}
-body[data-view="map"] {
-  height: 100%;
-  overflow: hidden;
-}
-body[data-view="map"] .app {
-  height: 100dvh;
-  overflow: hidden;
-}
-body[data-view="map"] main {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-body[data-view="map"] #view-map.active {
-  flex: 1;
-  min-height: 0;
-}
-body[data-view="wall"],
-body[data-view="queues"],
-body[data-view="sources"] {
-  height: auto;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-body[data-view="wall"] .app,
-body[data-view="queues"] .app,
-body[data-view="sources"] .app {
-  height: auto;
-  min-height: 100dvh;
-  overflow: visible;
-}
-body[data-view="wall"] main,
-body[data-view="queues"] main,
-body[data-view="sources"] main {
-  overflow: visible;
-}
-
 @media (min-width: 900px) {
   .top { padding: 16px 24px 8px; }
   .tabs { padding: 6px 24px 0; display: flex; width: auto; }
@@ -453,14 +403,13 @@ body[data-view="sources"] main {
   .filters { grid-template-columns: minmax(0, 1fr) auto; }
   #view-map.active {
     grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
-    grid-template-rows: minmax(0, 1fr);
-    height: 100%;
-    min-height: 0;
-    padding: 16px 24px;
+    align-items: start;
+    padding: 16px 24px 24px;
   }
-  #map { height: 100%; min-height: 0; }
-  .map-wrap { height: 100%; min-height: 0; }
-  .panel { max-height: 100%; }
+  .map-wrap {
+    height: min(52vh, 520px);
+    min-height: 360px;
+  }
   .wall, .source-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); padding-left: 24px; padding-right: 24px; }
   .wall-stage { margin-left: 24px; margin-right: 24px; }
   .queue-cards { display: none; }
@@ -486,33 +435,13 @@ body[data-view="sources"] main {
   input[type="search"] { width: 100%; }
   .check { display: none; }
   .chips {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    flex-wrap: wrap;
   }
-  .chips::-webkit-scrollbar { display: none; width: 0; height: 0; }
-  .chip { flex: 0 0 auto; white-space: nowrap; }
-  .note { display: none; }
-  #view-map { padding: 8px 10px 0; }
-  #view-map.active {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-    grid-template-rows: none;
-  }
-  #map {
-    flex: none;
-    min-height: 0;
-    height: 100%;
-    overflow: hidden;
-  }
+  .chip { white-space: nowrap; }
+  #view-map { padding: 8px 10px 16px; }
   .map-wrap {
-    flex: 1 1 auto;
-    min-height: 180px;
-    height: auto;
+    height: min(42vh, 340px);
+    min-height: 200px;
   }
   .nearest-btn {
     top: 16px;
@@ -523,12 +452,7 @@ body[data-view="sources"] main {
   }
   .locate-status { top: 56px; right: 16px; }
   #detail {
-    flex: 0 1 38%;
-    max-height: 42%;
-    min-height: 120px;
     padding: 10px 12px;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
   }
   .crossing-list { margin-top: 8px; gap: 6px; }
   .crossing-list button { padding: 10px; }
