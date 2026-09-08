@@ -26,6 +26,7 @@ let nearestDistanceKm = null;
 let hlsProxyOk = null;
 let wallSelectedId = null;
 let playGeneration = 0;
+let snapshotTimer = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -79,6 +80,34 @@ function destroyActiveHls() {
   }
 }
 
+function stopSnapshotRefresh() {
+  if (snapshotTimer) {
+    clearInterval(snapshotTimer);
+    snapshotTimer = null;
+  }
+}
+
+function snapshotSrc(url) {
+  try {
+    const parsed = new URL(url, location.href);
+    parsed.searchParams.set("t", String(Date.now()));
+    return parsed.href;
+  } catch {
+    return `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+  }
+}
+
+function startSnapshotRefresh(img, url) {
+  stopSnapshotRefresh();
+  snapshotTimer = setInterval(() => {
+    if (!img.isConnected) {
+      stopSnapshotRefresh();
+      return;
+    }
+    img.src = snapshotSrc(url);
+  }, 30000);
+}
+
 function formatWait(seconds) {
   if (seconds == null || Number.isNaN(Number(seconds))) return "–";
   const s = Number(seconds);
@@ -114,14 +143,19 @@ function waitClass(seconds) {
 }
 
 function cameraStatus(cam) {
+  if (cam.kind === "snapshot" || cam.snapshot) return { label: "Live snapshot", cls: "live" };
   if (cam.kind === "hls") return { label: "Live HLS", cls: "live" };
   if (cam.kind === "youtube") return { label: "Live stream", cls: "live" };
   if (cam.kind === "page") return { label: "Official live page", cls: "page" };
   return { label: "Offline", cls: "offline" };
 }
 
+function hasWorkingPicture(cam) {
+  return Boolean(cam.snapshot || cam.youtube);
+}
+
 function isLiveKind(cam) {
-  return cam.kind === "hls" || cam.kind === "page" || cam.kind === "youtube";
+  return cam.kind === "snapshot" || cam.kind === "hls" || cam.kind === "youtube" || Boolean(cam.snapshot);
 }
 
 function nearbyQueues(lat, lng) {
@@ -227,7 +261,7 @@ function filterText(value) {
   if (country !== "all" && !String(value.country || "").includes(country) && !String(value.border || "").includes(country)) {
     return false;
   }
-  if (liveOnly && value.kind && value.kind !== "hls" && value.kind !== "page") return false;
+  if (liveOnly && value.kind && !isLiveKind(value)) return false;
   return matchesSearch(value, q);
 }
 
@@ -400,6 +434,7 @@ async function playWithFallback(video, cam, onOk, onFail) {
 }
 
 function mountHlsPlayer(host, cam) {
+  stopSnapshotRefresh();
   const initialStatus = hlsProxyOk === false ? fallbackMessage(cam) : "Trying live stream…";
   host.innerHTML = `
     ${playerFallbackHtml(cam, initialStatus)}
@@ -416,6 +451,10 @@ function mountHlsPlayer(host, cam) {
       video.classList.remove("hidden");
     },
     (msg) => {
+      if (cam.snapshot) {
+        mountSnapshotView(host, cam, { tryHls: false, failed: msg });
+        return;
+      }
       if (status) status.textContent = msg;
       video.classList.add("hidden");
       fallback.classList.remove("hidden");
@@ -432,9 +471,39 @@ function mountEmbedFrame(host, cam, src) {
   `;
 }
 
+function mountSnapshotView(host, cam, extras = {}) {
+  const url = cam.snapshot;
+  if (!url) {
+    mountStaticFallback(host, cam);
+    return;
+  }
+  const tryHls = extras.tryHls !== false && cam.slug;
+  const failNote = extras.failed
+    ? `${extras.failed} Showing the Customs still instead.`
+    : "Official Moldova Customs still · refreshes every 30 seconds.";
+  host.innerHTML = `
+    <div class="snap-wrap">
+      <img class="snap-frame" alt="${escapeHtml(cam.name)}" referrerpolicy="no-referrer" src="${escapeHtml(snapshotSrc(url))}">
+      ${tryHls ? `<button type="button" class="playbtn" data-play-hls>▶ Play live video</button>` : ""}
+    </div>
+    <p class="hint">${escapeHtml(failNote)}</p>
+    <div class="actions">${officialPageLink(cam, "Open official page", true)}</div>
+  `;
+  const img = host.querySelector(".snap-frame");
+  if (img) startSnapshotRefresh(img, url);
+  host.querySelector("[data-play-hls]")?.addEventListener("click", () => {
+    mountHlsPlayer(host, cam);
+  });
+}
+
 function mountPlayer(host, cam) {
   destroyActiveHls();
+  stopSnapshotRefresh();
   if (!host) return;
+  if (cam.snapshot) {
+    mountSnapshotView(host, cam, { tryHls: Boolean(cam.slug) });
+    return;
+  }
   if (cam.kind === "hls" && cam.slug) {
     mountHlsPlayer(host, cam);
     return;
@@ -488,6 +557,7 @@ function openCameraSheet(cam) {
 
 function closeCameraSheet() {
   destroyActiveHls();
+  stopSnapshotRefresh();
   playGeneration += 1;
   const sheet = $("camera-sheet");
   if (!sheet) return;
@@ -564,7 +634,7 @@ function showCrossing(group, extras = {}) {
 }
 
 function markerColor(group) {
-  const hasLive = cameras.some((cam) => cam.kind === "hls" && Math.hypot(cam.lat - group.lat, cam.lng - group.lng) < 0.08);
+  const hasLive = cameras.some((cam) => (cam.kind === "hls" || cam.snapshot) && Math.hypot(cam.lat - group.lat, cam.lng - group.lng) < 0.08);
   if (hasLive) return "#3d8bff";
   if (group.truckWait > 6 * 3600) return "#ff5d5d";
   if (group.truckWait > 1800) return "#ffb020";
@@ -703,9 +773,13 @@ function wallCameras() {
   return cameras.filter((cam) => {
     if (!matchesSearch(cam, q)) return false;
     if (liveOnly && !isLiveKind(cam)) return false;
-    if (isLiveKind(cam)) return true;
-    if (country === "all") return true;
-    return String(cam.country || "").includes(country) || String(cam.border || "").includes(country);
+    if (country !== "all" && !String(cam.country || "").includes(country) && !String(cam.border || "").includes(country)) {
+      return false;
+    }
+    return true;
+  }).sort((a, b) => {
+    const rank = (cam) => (hasWorkingPicture(cam) ? 0 : cam.kind === "hls" ? 1 : cam.kind === "offline" ? 3 : 2);
+    return rank(a) - rank(b);
   });
 }
 
@@ -718,9 +792,17 @@ function renderWallCards() {
   $("wall").innerHTML = matched.map((cam) => {
     const status = cameraStatus(cam);
     const selected = cam.id === wallSelectedId ? " selected" : "";
-    const action = cam.kind === "hls" || cam.kind === "youtube" || cam.kind === "page" ? "Watch live in this portal" : "Offline";
+    const action = hasWorkingPicture(cam)
+      ? "Live picture · tap to open"
+      : cam.kind === "hls" || cam.kind === "youtube" || cam.kind === "page"
+        ? "Watch live in this portal"
+        : "Offline";
+    const thumb = cam.snapshot
+      ? `<img class="wall-thumb" alt="" referrerpolicy="no-referrer" src="${escapeHtml(snapshotSrc(cam.snapshot))}">`
+      : "";
     return `
     <article class="wall-item cam-card${selected}" data-cam="${cam.id}" tabindex="0" role="button">
+      ${thumb}
       <span class="badge ${status.cls}">${status.label}</span>
       <h3>${escapeHtml(cam.name)}</h3>
       <p>${escapeHtml(cam.crossing)}</p>
@@ -803,7 +885,7 @@ function formatAge(ms) {
 }
 
 function updateStats() {
-  const live = cameras.filter((c) => c.kind === "hls" || c.kind === "page").length;
+  const live = cameras.filter((c) => isLiveKind(c) || c.kind === "page").length;
   const groups = groupedCrossings();
   const trucks = (queues.trucks || []).reduce((n, x) => n + (x.vehicle_in_active_queues_counts || 0), 0);
   $("stat-live").textContent = live;
@@ -861,7 +943,7 @@ document.querySelectorAll(".tab").forEach((btn) => {
   });
 });
 
-function setBorderFilter(value) {
+function applyBorderFilter(value, { showMap = true } = {}) {
   $("country-filter").value = value;
   document.querySelectorAll(".chip").forEach((chip) => {
     chip.classList.toggle("active", chip.dataset.border === value);
@@ -871,8 +953,12 @@ function setBorderFilter(value) {
   nearestDistanceKm = null;
   $("detail").dataset.pinned = "";
   if (value !== "all") $("live-only").checked = false;
-  showMapView();
+  if (showMap) showMapView();
   refreshViews();
+}
+
+function setBorderFilter(value) {
+  applyBorderFilter(value, { showMap: true });
 }
 
 ["search", "country-filter", "live-only"].forEach((id) => {
@@ -906,14 +992,20 @@ $("camera-sheet")?.addEventListener("click", (event) => {
 });
 $("camera-sheet")?.addEventListener("close", () => {
   destroyActiveHls();
+  stopSnapshotRefresh();
   playGeneration += 1;
 });
 
 renderSources();
 loadHlsStatus();
-document.body.dataset.view = "map";
 pendingFit = true;
-setBorderFilter("Poland");
+$("live-only").checked = true;
+applyBorderFilter("all", { showMap: false });
+setActiveView("wall");
+renderWall();
 loadQueues();
 setInterval(loadQueues, 15000);
 setInterval(updateStats, 1000);
+setInterval(() => {
+  if ($("view-wall")?.classList.contains("active")) renderWallCards();
+}, 30000);

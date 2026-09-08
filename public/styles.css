@@ -224,7 +224,8 @@ video {
 .hidden { display: none !important; }
 
 .wall-stage {
-  display: none;
+  display: block;
+  margin: 16px 16px 0;
 }
 .wall-stage h2 { margin: 8px 0 4px; }
 .wall-item.selected { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
@@ -336,6 +337,41 @@ th { color: var(--muted); font-weight: 600; }
   border-radius: 12px;
   background: #000;
   margin: 8px 0;
+}
+.snap-wrap {
+  position: relative;
+  margin: 8px 0;
+}
+.snap-frame,
+.wall-thumb {
+  width: 100%;
+  display: block;
+  border-radius: 12px;
+  background: #000;
+  object-fit: cover;
+}
+.snap-frame {
+  aspect-ratio: 16 / 9;
+  min-height: 180px;
+}
+.wall-thumb {
+  aspect-ratio: 16 / 9;
+  margin-bottom: 8px;
+}
+.playbtn {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  color: #07111c;
+  background: var(--gold);
+  border: 0;
+  border-radius: 999px;
+  min-height: 44px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
 .sheet {
   position: fixed;

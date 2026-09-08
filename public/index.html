@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Ukraine Live Camera Portal</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="/styles.css?v=21" />
+    <link rel="stylesheet" href="/styles.css?v=22" />
   </head>
-  <body>
+  <body data-view="wall">
     <div class="app">
     <div class="chrome">
       <header class="top">
@@ -24,8 +24,8 @@
       </header>
 
       <nav class="tabs" aria-label="Views">
-        <button class="tab active" data-view="map">Map</button>
-        <button class="tab" data-view="wall">Cameras</button>
+        <button class="tab" data-view="map">Map</button>
+        <button class="tab active" data-view="wall">Cameras</button>
         <button class="tab" data-view="queues">Queues</button>
         <button class="tab" data-view="sources">Sources</button>
       </nav>
@@ -36,19 +36,19 @@
             <input id="search" type="search" placeholder="Search crossings" autocomplete="off" />
           </label>
           <select id="country-filter" aria-label="Border filter">
-            <option value="all">All borders</option>
-            <option value="Poland" selected>Ukraine–Poland</option>
+            <option value="all" selected>All borders</option>
+            <option value="Poland">Ukraine–Poland</option>
             <option value="Slovakia">Slovakia</option>
             <option value="Hungary">Hungary</option>
             <option value="Romania">Romania</option>
             <option value="Moldova">Moldova</option>
             <option value="Ukraine">Uman / Ukraine</option>
           </select>
-          <label class="check"><input id="live-only" type="checkbox" /> Live cameras only</label>
+          <label class="check"><input id="live-only" type="checkbox" checked /> Live cameras only</label>
         </div>
         <div class="chips" id="border-chips">
-          <button type="button" class="chip" data-border="all">All</button>
-          <button type="button" class="chip featured active" data-border="Poland">Poland</button>
+          <button type="button" class="chip featured active" data-border="all">All</button>
+          <button type="button" class="chip" data-border="Poland">Poland</button>
           <button type="button" class="chip" data-border="Slovakia">Slovakia</button>
           <button type="button" class="chip" data-border="Hungary">Hungary</button>
           <button type="button" class="chip" data-border="Romania">Romania</button>
@@ -59,7 +59,7 @@
     </div>
 
     <main>
-      <section id="view-map" class="view active">
+      <section id="view-map" class="view">
         <div class="map-wrap">
           <div id="map"></div>
           <button type="button" id="nearest-btn" class="nearest-btn">Near me</button>
@@ -70,9 +70,9 @@
         </aside>
       </section>
 
-      <section id="view-wall" class="view">
+      <section id="view-wall" class="view active">
         <div id="wall-stage" class="wall-stage panel">
-          <p class="hint">Tap a camera or Watch live. Video plays in this portal when the stream can be embedded.</p>
+          <p class="hint">Live Moldova Customs stills refresh every 30 seconds. Tap one to open it here. Border Police HLS video only plays on some networks.</p>
         </div>
         <div id="wall" class="wall"></div>
       </section>
@@ -102,7 +102,9 @@
       </section>
 
       <p class="note">
-        Public feeds only. Most Ukraine-side and Poland–Ukraine border webcams have been off since 24 February 2022.
+        Public feeds only. Moldova Customs stills refresh every 30 seconds and work worldwide.
+        Moldova Border Police HLS video uses port 50793 and often cannot be reached from this host.
+        Most Ukraine-side and Poland–Ukraine border webcams have been off since 24 February 2022.
         Queue numbers refresh from the official eQueue service. Your location stays in this browser and is never sent to a server.
       </p>
     </main>
@@ -118,7 +120,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
-    <script src="/data.js?v=21"></script>
-    <script src="/app.js?v=21"></script>
+    <script src="/data.js?v=22"></script>
+    <script src="/app.js?v=22"></script>
   </body>
 </html>
